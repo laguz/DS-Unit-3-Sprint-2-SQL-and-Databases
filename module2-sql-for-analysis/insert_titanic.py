@@ -23,6 +23,22 @@ cur.execute('SELECT * from test_table;')
 ### Note - nothing happened yet! We need to actually *fetch* from the cursor
 print(cur.fetchall())
 
-#df = pd.read_csv('titanic.csv')
+insertion_sql ="""
+INSERT INTO test_table (name, data) VALUES
+(
+  'A row name',
+  null
+),
+(
+  'Another row, with JSON',
+  '{ "a": 1, "b": ["dog", "cat", 42], "c": true }'::JSONB
+);
+"""
 
-#df.to_sql('TITANIC', con=conn)
+cur.execute(insertion_sql)
+
+
+conn.commit()
+
+cur.close()
+conn.close()
