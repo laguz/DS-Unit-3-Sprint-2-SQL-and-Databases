@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+import json
 import pandas as pd
 import psycopg2
 
@@ -10,35 +11,27 @@ DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_HOST = os.getenv("DB_HOST")
 
-print(DB_NAME,DB_USER,DB_PASSWORD,DB_HOST)
+#print(DB_NAME,DB_USER,DB_PASSWORD,DB_HOST)
 
 ### Connect to ElephantSQL-hosted PostgreSQL
 conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASSWORD, host=DB_HOST)
-print("CONNECTION", conn)
-### A "cursor", a structure to iterate over db records to perform queries
+#Create the cursor
 cur = conn.cursor()
-print('CURSOR', cur)
-### An example query
-cur.execute('SELECT * from test_table;')
-### Note - nothing happened yet! We need to actually *fetch* from the cursor
-print(cur.fetchall())
 
-insertion_sql ="""
-INSERT INTO test_table (name, data) VALUES
-(
-  'A row name',
-  null
-),
-(
-  'Another row, with JSON',
-  '{ "a": 1, "b": ["dog", "cat", 42], "c": true }'::JSONB
-);
-"""
+#Load the CSV data
+data = pd.read_csv('titanic.csv')
+#Create the DataFrame
+df = pd.DataFrame(data, columns= ['Survived','Pclass','Name','Sex','Age','Siblings_Spouses_Aboard', 'Parents_Children_Aboard','Fare'])
 
-cur.execute(insertion_sql)
+#Create the for loop to load the data.
+for row in df.itertuples():
+    insertion_query = "INSERT INTO titanic (Survived,Pclass,Name,Sex,Age,Siblings_Spouses_Aboard,Parents_Children_Aboard,Fare) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)"
+    cur.execute(insertion_query,
+    (row.Survived,row.Pclass,row.Name,row.Sex,row.Age,row.Siblings_Spouses_Aboard,row.Parents_Children_Aboard,row.Fare))
+    print(row.Survived,row.Pclass,row.Name,row.Sex,row.Age,row.Siblings_Spouses_Aboard,row.Parents_Children_Aboard,row.Fare)
 
+    conn.commit()
 
-conn.commit()
-
+#Close the connection
 cur.close()
 conn.close()
